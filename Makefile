@@ -247,3 +247,6 @@ docs-serve-dev:
 	  -w /docs \
 	  -p '$(DOCS_DEV_PORT):8000' \
 	  k0sdocs.docker-image.serve-dev
+
+# Helper target to printe internal make vars
+print-%  : ; @echo $($*)
