@@ -1,6 +1,5 @@
 name: k0s Check Network
 on:
-  pull_request:
   workflow_dispatch:
     inputs:
       prNumber:
@@ -155,12 +154,12 @@ jobs:
           terraform destroy -auto-approve
         if: ${{ always() }}
 
-      # - name: slack notify
-      #   env:
-      #     SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-      #   uses: 8398a7/action-slack@v3
-      #   with:
-      #     job_name: "K8s Network Conformance Testing"
-      #     status: ${{ job.status }}
-      #     fields: workflow,ref,commit,author,job,took # selectable (default: repo,message)
-      #   if: ${{ always() }} # Pick up events even if the job fails or is canceled.
+      - name: slack notify
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        uses: 8398a7/action-slack@v3
+        with:
+          job_name: "K8s Network Conformance Testing"
+          status: ${{ job.status }}
+          fields: workflow,ref,commit,author,job,took # selectable (default: repo,message)
+        if: ${{ always() }} # Pick up events even if the job fails or is canceled.

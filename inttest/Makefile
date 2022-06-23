@@ -2,7 +2,7 @@
 ARCH = $(shell go env GOARCH)
 OS = $(shell go env GOOS)
 
-SONOBUOY_VERSION ?= "0.56.7"
+SONOBUOY_VERSION ?= 0.56.7
 sonobuoy_url = https://github.com/vmware-tanzu/sonobuoy/releases/download/v${SONOBUOY_VERSION}/sonobuoy_${SONOBUOY_VERSION}_$(OS)_$(ARCH).tar.gz
 
 curl = curl -L --silent
@@ -43,8 +43,13 @@ check-network: bin/sonobuoy
 		--kubernetes-version=v$(kubernetes_version)
 
 check-conformance: bin/sonobuoy
-	K0S_PATH=$(realpath ../k0s) SONOBUOY_PATH=$(realpath bin/sonobuoy) \
-		go test -count=1 -v -timeout 240m github.com/k0sproject/k0s/inttest/sonobuoy/ -run ^TestConformanceSuite -kubernetes-version=v$(kubernetes_version)
+	$(realpath bin/sonobuoy) run --wait=1200 \
+		--mode=certified-conformance \
+		--kubernetes-version=v$(kubernetes_version)
+
+get-conformance-results: bin/sonobuoy
+	$(realpath bin/sonobuoy) retrieve
+
 TIMEOUT ?= 4m
 
 check-ctr: TIMEOUT=10m
@@ -74,5 +79,7 @@ $(smoketests): .footloose-alpine.stamp
 	K0S_IMAGES_BUNDLE="$(realpath ../image-bundle/bundle.tar)" K0S_PATH="$(realpath ../k0s)" go test -count=1 -v -timeout $(TIMEOUT) github.com/k0sproject/k0s/inttest/$(subst check-,,$@)
 
 .PHONY: clean
+
 clean:
+	$(realpath bin/sonobuoy) delete
 	rm -rf bin sonobuoy/*_sonobuoy_*.tar.gz .*.stamp
