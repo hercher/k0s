@@ -24,3 +24,8 @@ variable "k0s_version" {
   EOF
   default     = ""
 }
+
+variable "k0s_binary_path" {
+  type    = string
+  default = ""
+}

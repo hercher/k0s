@@ -22,7 +22,7 @@ locals {
           }
           role          = host.tags["Role"]
           uploadBinary  = true
-          k0sBinaryPath = local.use_remote_k0s_version ? null : "../../../k0s"
+          k0sBinaryPath = local.use_remote_k0s_version ? null : var.k0s_binary_path
         }
       ]
       k0s = {

@@ -2,7 +2,8 @@
 ARCH = $(shell go env GOARCH)
 OS = $(shell go env GOOS)
 
-sonobuoy_url = https://github.com/vmware-tanzu/sonobuoy/releases/download/v0.56.6/sonobuoy_0.56.6_$(OS)_$(ARCH).tar.gz
+SONOBUOY_VERSION ?= "0.56.7"
+sonobuoy_url = https://github.com/vmware-tanzu/sonobuoy/releases/download/v${SONOBUOY_VERSION}/sonobuoy_${SONOBUOY_VERSION}_$(OS)_$(ARCH).tar.gz
 
 curl = curl -L --silent
 
@@ -35,13 +36,11 @@ bin/sonobuoy: | bin
 	  footloose-alpine
 	touch $@
 
-check-network: bin/sonobuoy .footloose-alpine.stamp
-	K0S_PATH=$(realpath ../k0s) SONOBUOY_PATH=$(realpath bin/sonobuoy) \
-		go test -count=1 -v -timeout 20m github.com/k0sproject/k0s/inttest/sonobuoy/ -run ^TestFootlooseNetworkSuite$
-
-check-network-vm: bin/sonobuoy
-	K0S_PATH=$(realpath ../k0s) SONOBUOY_PATH=$(realpath bin/sonobuoy) \
-		go test -count=1 -v -timeout 30m github.com/k0sproject/k0s/inttest/sonobuoy/ -run ^TestVMNetworkSuite -kubernetes-version=v$(kubernetes_version)
+check-network: bin/sonobuoy
+	$(realpath bin/sonobuoy) run --wait=1200 --plugin=e2e --plugin-env=e2e.E2E_USE_GO_RUNNER=true \
+		--e2e-focus='\[sig-network\].*\[Conformance\]' \
+		--e2e-skip='\[Serial\]' --e2e-parallel=y \
+		--kubernetes-version=v$(kubernetes_version)
 
 check-conformance: bin/sonobuoy
 	K0S_PATH=$(realpath ../k0s) SONOBUOY_PATH=$(realpath bin/sonobuoy) \

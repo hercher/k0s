@@ -118,7 +118,8 @@ jobs:
         run: |
           PR_NUMBER=$(echo ${GITHUB_REF} | cut -d / -f 3 )
           export TF_VAR_cluster_name="k0s_pr_${PR_NUMBER}"
-          export TF_VAR_k0s_version=${{ steps.bin_info.outputs.K0S_VERSION }}
+          export TF_VAR_k0s_version="${{ steps.bin_info.outputs.K0S_VERSION }}"
+          export TF_VAR_k0s_binary_path="${{ github.workspace }}/k0s"
 
           # debug
           echo "k0s_version = ${TF_VAR_k0s_version}"
@@ -139,20 +140,12 @@ jobs:
           # save kubeconfig file
           k0sctl kubeconfig > ${{ github.workspace }}/kubeconfig
 
-      - name: Download Sonobuoy
-        run: |
-          wget https://github.com/vmware-tanzu/sonobuoy/releases/download/v${{ env.SONOBUOY_VERSION }}/sonobuoy_${{ env.SONOBUOY_VERSION }}_linux_amd64.tar.gz
-          sudo mv sonobuoy /usr/local/bin
-          sudo chmod +x /usr/local/bin/sonobuoy
       - name: Run Sonobuoy
         run: |
           export KUBECONFIG=${{ github.workspace }}/kubeconfig
-          sonobuoy run --wait=1200 --plugin=e2e --plugin-env=e2e.E2E_USE_GO_RUNNER=true \
-            --e2e-focus='\[sig-network\].*\[Conformance\]' \
-            --e2e-skip='\[Serial\]' --e2e-parallel=y \
-            --kubernetes-version=v${{ steps.k0s_build.outputs.KUBERNETES_VERSION }}
+          SONOBUOY_VERSION=${{ env.SONOBUOY_VERSION}} make check-network
+        working-directory: ./inttest
 
-        working-directory: ./
       - name: Terraform Destroy
         run: |
           PR_NUMBER=$(echo ${GITHUB_REF} | cut -d / -f 3 )
